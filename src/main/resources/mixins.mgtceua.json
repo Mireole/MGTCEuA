@@ -1,0 +1,12 @@
+{
+  "package": "io.github.mireole.mgtceua.mixin",
+  "refmap": "mixins.mgtceua.refmap.json",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MetaTileEntityHolderMixin"
+  ],
+  "client": [],
+  "server": []
+}
