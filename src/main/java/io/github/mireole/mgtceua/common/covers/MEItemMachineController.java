@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-public class MEItemMachineController extends AbstractMeMachineController{
+public class MEItemMachineController extends AbstractMeMachineController {
     public MEItemMachineController(@NotNull CoverDefinition definition, @NotNull CoverableView coverableView, @NotNull EnumFacing attachedSide) {
         super(definition, coverableView, attachedSide);
     }

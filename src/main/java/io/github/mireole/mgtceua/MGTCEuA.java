@@ -25,6 +25,7 @@ public class MGTCEuA {
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
+        LOGGER.info("MGTCEuA Pre-Initialization");
         proxy.preInit();
     }
 
