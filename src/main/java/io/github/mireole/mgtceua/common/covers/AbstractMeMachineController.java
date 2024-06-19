@@ -44,14 +44,14 @@ abstract public class AbstractMeMachineController extends CoverBase implements I
     public void onAttachment(@NotNull CoverableView coverableView, @NotNull EnumFacing side, @Nullable EntityPlayer player, @NotNull ItemStack itemStack) {
         super.onAttachment(coverableView, side, player, itemStack);
         this.getProxy().setOwner(player);
-        this.tryConnectToCoverable();
+        this.tryConnectToTileEntity();
     }
 
     @Override
     public AENetworkProxy getProxy() {
         if (!this.networkProxy.isReady() && this.getWorld() != null) {
             this.networkProxy.onReady();
-            this.tryConnectToCoverable();
+            this.tryConnectToTileEntity();
         }
         return this.networkProxy;
     }
@@ -137,11 +137,12 @@ abstract public class AbstractMeMachineController extends CoverBase implements I
     }
 
     /*
-        * Tries to connect the cover to the coverable's node on the same side if it has one
+        * Tries to connect the cover to the tile entity's node if it has one
      */
-    private void tryConnectToCoverable() {
+    private void tryConnectToTileEntity() {
         if (this.gridConnection != null) return;
         if (this.getCoverableView() instanceof MetaTileEntity tileEntity && tileEntity.getHolder() instanceof IGridProxyable proxyable) {
+            if (proxyable.getProxy() == null) return;
             IGridNode nodeOther = proxyable.getProxy().getNode();
             IGridNode node = this.getProxy().getNode();
             if (nodeOther == null || node == null) return;
