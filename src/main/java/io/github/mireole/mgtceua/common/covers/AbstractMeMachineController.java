@@ -1,30 +1,37 @@
 package io.github.mireole.mgtceua.common.covers;
 
-import appeng.api.networking.*;
+import appeng.api.AEApi;
+import appeng.api.exceptions.FailedConnectionException;
+import appeng.api.networking.GridFlags;
+import appeng.api.networking.IGridConnection;
+import appeng.api.networking.IGridNode;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEPartLocation;
 import appeng.api.util.DimensionalCoord;
 import appeng.me.helpers.AENetworkProxy;
 import appeng.me.helpers.IGridProxyable;
+import gregtech.api.cover.CoverBase;
 import gregtech.api.cover.CoverDefinition;
+import gregtech.api.cover.CoverWithUI;
 import gregtech.api.cover.CoverableView;
-import gregtech.common.covers.CoverMachineController;
+import gregtech.api.gui.ModularUI;
+import gregtech.api.metatileentity.MetaTileEntity;
+import io.github.mireole.mgtceua.MGTCEuA;
 import io.github.mireole.mgtceua.api.IAECover;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ITickable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.EnumSet;
 
-abstract public class AbstractMeMachineController extends CoverMachineController implements IAECover {
+abstract public class AbstractMeMachineController extends CoverBase implements IAECover, CoverWithUI {
     protected final AENetworkProxy networkProxy;
+    protected IGridConnection gridConnection;
     public AbstractMeMachineController(@NotNull CoverDefinition definition, @NotNull CoverableView coverableView, @NotNull EnumFacing attachedSide) {
         super(definition, coverableView, attachedSide);
         this.networkProxy = new AENetworkProxy(this, "mte_proxy", this.getPickItem(), true);
@@ -37,12 +44,14 @@ abstract public class AbstractMeMachineController extends CoverMachineController
     public void onAttachment(@NotNull CoverableView coverableView, @NotNull EnumFacing side, @Nullable EntityPlayer player, @NotNull ItemStack itemStack) {
         super.onAttachment(coverableView, side, player, itemStack);
         this.getProxy().setOwner(player);
+        this.tryConnectToCoverable();
     }
 
     @Override
     public AENetworkProxy getProxy() {
         if (!this.networkProxy.isReady() && this.getWorld() != null) {
             this.networkProxy.onReady();
+            this.tryConnectToCoverable();
         }
         return this.networkProxy;
     }
@@ -115,4 +124,34 @@ abstract public class AbstractMeMachineController extends CoverMachineController
             this.networkProxy.invalidate();
         }
     }
+
+    // TODO rework the ui for MUI2 once GTCEu 2.8.9 is out
+    @Override
+    public ModularUI createUI(EntityPlayer player) {
+        return null;
+    }
+
+    @Override
+    public boolean canAttach(@NotNull CoverableView coverable, @NotNull EnumFacing side) {
+        return true;
+    }
+
+    /*
+        * Tries to connect the cover to the coverable's node on the same side if it has one
+     */
+    private void tryConnectToCoverable() {
+        if (this.gridConnection != null) return;
+        if (this.getCoverableView() instanceof MetaTileEntity tileEntity && tileEntity.getHolder() instanceof IGridProxyable proxyable) {
+            IGridNode nodeOther = proxyable.getProxy().getNode();
+            IGridNode node = this.getProxy().getNode();
+            if (nodeOther == null || node == null) return;
+
+            try {
+                this.gridConnection = AEApi.instance().grid().createGridConnection(node, nodeOther);
+            } catch (FailedConnectionException exception) {
+                MGTCEuA.LOGGER.error("Failed to connect ME machine controller to machine", exception);
+            }
+        }
+    }
+
 }
