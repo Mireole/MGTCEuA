@@ -10,19 +10,22 @@ import appeng.api.util.AEPartLocation;
 import appeng.api.util.DimensionalCoord;
 import appeng.me.helpers.AENetworkProxy;
 import appeng.me.helpers.IGridProxyable;
+import codechicken.lib.raytracer.CuboidRayTraceResult;
 import gregtech.api.cover.CoverBase;
 import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.CoverWithUI;
 import gregtech.api.cover.CoverableView;
-import gregtech.api.gui.ModularUI;
 import gregtech.api.metatileentity.MetaTileEntity;
 import io.github.mireole.mgtceua.MGTCEuA;
 import io.github.mireole.mgtceua.api.IAECover;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,7 @@ import java.util.EnumSet;
 abstract public class AbstractMeMachineController extends CoverBase implements IAECover, CoverWithUI {
     protected final AENetworkProxy networkProxy;
     protected IGridConnection gridConnection;
+
     public AbstractMeMachineController(@NotNull CoverDefinition definition, @NotNull CoverableView coverableView, @NotNull EnumFacing attachedSide) {
         super(definition, coverableView, attachedSide);
         this.networkProxy = new AENetworkProxy(this, "mte_proxy", this.getPickItem(), true);
@@ -126,10 +130,6 @@ abstract public class AbstractMeMachineController extends CoverBase implements I
     }
 
     // TODO rework the ui for MUI2 once GTCEu 2.8.9 is out
-    @Override
-    public ModularUI createUI(EntityPlayer player) {
-        return null;
-    }
 
     @Override
     public boolean canAttach(@NotNull CoverableView coverable, @NotNull EnumFacing side) {
@@ -153,6 +153,15 @@ abstract public class AbstractMeMachineController extends CoverBase implements I
                 MGTCEuA.LOGGER.error("Failed to connect ME machine controller to machine", exception);
             }
         }
+    }
+
+    @Override
+    public @NotNull EnumActionResult onScrewdriverClick(@NotNull EntityPlayer playerIn, @NotNull EnumHand hand,
+                                                        @NotNull CuboidRayTraceResult hitResult) {
+        if (!this.getCoverableView().getWorld().isRemote) {
+            this.openUI((EntityPlayerMP) playerIn);
+        }
+        return EnumActionResult.SUCCESS;
     }
 
 }

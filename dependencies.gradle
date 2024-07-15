@@ -39,7 +39,7 @@
  */
 dependencies {
     implementation rfg.deobf("curse.maven:ae2-extended-life-570458:5378163-sources-5378165")
-    implementation rfg.deobf("curse.maven:gregtechceu-557242:5322654-sources-5322656")
+    implementation rfg.deobf("curse.maven:gregtechceu-557242:5519022-sources-5519024")
     api("codechicken:codechickenlib:3.2.3.358")
     compileOnlyApi rfg.deobf("curse.maven:jei-238222:4538010")
 }
