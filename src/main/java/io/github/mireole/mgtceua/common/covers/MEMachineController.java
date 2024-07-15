@@ -39,7 +39,7 @@ public class MEMachineController extends AbstractMeMachineController {
 
     @Override
     public void renderCover(@NotNull CCRenderState renderState, @NotNull Matrix4 translation, IVertexOperation[] pipeline, @NotNull Cuboid6 plateBox, @NotNull BlockRenderLayer layer) {
-        MGATextures.ME_ITEM_MACHINE_CONTROLLER.renderSided(this.getAttachedSide(), plateBox, renderState, pipeline, translation);
+        MGATextures.ME_MACHINE_CONTROLLER.renderSided(this.getAttachedSide(), plateBox, renderState, pipeline, translation);
     }
 
     @Override

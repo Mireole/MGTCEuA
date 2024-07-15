@@ -21,7 +21,7 @@ public class MGAMetaItem extends StandardMetaItem {
     @Override
     public void registerSubItems() {
         // ME machine controller covers 0-1
-        COVER_ITEM_MACHINE_CONTROLLER = addItem(0, "cover.me_item_machine_controller");
+        COVER_ITEM_MACHINE_CONTROLLER = addItem(0, "cover.me_machine_controller");
         // TODO: advanced me machine controller (multiple conditions, fluids & items)
     }
 }
