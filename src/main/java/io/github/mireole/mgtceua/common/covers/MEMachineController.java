@@ -27,9 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 
-// TODO Remove "item" from the name of every resource linked to this
 public class MEMachineController extends AbstractMeMachineController {
-    // TODO move this to the WidgetGroupLevelEmitter class ?
     protected int amount = 0;
     protected Object stack;
     protected LevelEmitterMode mode;
