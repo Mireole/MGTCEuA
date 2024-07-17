@@ -1,10 +1,30 @@
 package io.github.mireole.mgtceua.common.covers;
 
+import appeng.api.AEApi;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.storage.IStackWatcher;
+import appeng.api.networking.storage.IStackWatcherHost;
+import appeng.api.storage.IMEMonitor;
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IFluidStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IItemList;
+import appeng.fluids.util.AEFluidStack;
+import appeng.me.GridAccessException;
+import appeng.me.helpers.AENetworkProxy;
+import appeng.util.item.AEItemStack;
+import appeng.util.item.AEStack;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.pipeline.IVertexOperation;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Matrix4;
 import gregtech.api.capability.GregtechDataCodes;
+import gregtech.api.capability.GregtechTileCapabilities;
+import gregtech.api.capability.IControllable;
+import gregtech.api.cover.Cover;
 import gregtech.api.cover.CoverDefinition;
 import gregtech.api.cover.CoverableView;
 import gregtech.api.gui.GuiTextures;
@@ -23,14 +43,17 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IStringSerializable;
 import net.minecraftforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 
-public class MEMachineController extends AbstractMeMachineController {
+public class MEMachineController extends AbstractMeMachineController implements IStackWatcherHost {
     protected int amount = 0;
+    protected long networkAmount = 0;
     protected Object stack;
     protected LevelEmitterMode mode;
+    protected IStackWatcher watcher;
 
     public MEMachineController(@NotNull CoverDefinition definition, @NotNull CoverableView coverableView, @NotNull EnumFacing attachedSide) {
         super(definition, coverableView, attachedSide);
@@ -52,6 +75,7 @@ public class MEMachineController extends AbstractMeMachineController {
                 .widget(new WidgetGroupLevelEmitter(45, (i) -> {
                             this.amount = i;
                             this.markDirty();
+                            this.update();
                         },
                         () -> this.amount))
                 .bindPlayerInventory(player.inventory, GuiTextures.SLOT, 7, 69)
@@ -64,16 +88,8 @@ public class MEMachineController extends AbstractMeMachineController {
 
     public void setLevelEmitterMode(LevelEmitterMode mode) {
         this.mode = mode;
-        this.writeCustomData(GregtechDataCodes.UPDATE_COVER_MODE, buf -> buf.writeEnumValue(mode));
         this.markDirty();
-    }
-
-    @Override
-    public void readCustomData(int discriminator, @NotNull PacketBuffer buf) {
-        super.readCustomData(discriminator, buf);
-        if (discriminator == GregtechDataCodes.UPDATE_COVER_MODE) {
-            this.mode = buf.readEnumValue(LevelEmitterMode.class);
-        }
+        this.update();
     }
 
     protected void writeStackToNBT(NBTTagCompound tag) {
@@ -149,22 +165,111 @@ public class MEMachineController extends AbstractMeMachineController {
 
     protected void onStackChange(Object newStack) {
         this.stack = newStack;
+        this.configWatcher();
         this.markDirty();
     }
 
+    protected AEStack<?> getAEStack() {
+        if (this.stack instanceof ItemStack itemStack) {
+            return AEItemStack.fromItemStack(itemStack);
+        }
+        else if (this.stack instanceof FluidStack fluidStack) {
+            return AEFluidStack.fromFluidStack(fluidStack);
+        }
+        return null;
+    }
+
+    @Override
+    public void updateWatcher(IStackWatcher iStackWatcher) {
+        this.watcher = iStackWatcher;
+        this.configWatcher();
+    }
+
+    protected void configWatcher() {
+        if (this.watcher == null) {
+            this.networkAmount = 0;
+            return;
+        }
+        this.watcher.reset();
+
+        IAEStack<?> stack = this.getAEStack();
+        if (stack == null) return;
+        this.watcher.add(stack);
+
+        AENetworkProxy proxy = this.getProxy();
+        if (proxy == null) return;
+
+        try {
+            if (stack instanceof IAEItemStack itemStack) {
+                IItemStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+                IMEMonitor<IAEItemStack> monitor = proxy.getStorage().getInventory(channel);
+                IAEItemStack stored = monitor.getStorageList().findPrecise(itemStack);
+
+                if (stored == null) {
+                    this.networkAmount = 0;
+                }
+                else {
+                    this.networkAmount = stored.getStackSize();
+                }
+
+            } else if (stack instanceof IAEFluidStack fluidStack) {
+                IFluidStorageChannel channel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
+                IMEMonitor<IAEFluidStack> monitor = proxy.getStorage().getInventory(channel);
+                IAEFluidStack stored = monitor.getStorageList().findPrecise(fluidStack);
+
+                if (stored == null) {
+                    this.networkAmount = 0;
+                }
+                else {
+                    this.networkAmount = stored.getStackSize();
+                }
+            }
+            else {
+                this.networkAmount = 0;
+            }
+        } catch (GridAccessException ignored) {
+
+        }
+        this.update();
+    }
+
+    protected void update() {
+        if (this.getWorld().isRemote) return;
+        IControllable controllable = this.getCoverableView().getCapability(GregtechTileCapabilities.CAPABILITY_CONTROLLABLE, this.getAttachedSide());
+        if (controllable == null) return;
+
+        controllable.setWorkingEnabled(!this.mode.evaluate(this.amount, this.networkAmount));
+    }
+
+    @Override
+    public void onStackChange(IItemList<?> iItemList, IAEStack<?> iaeStack, IAEStack<?> iaeStack1, IActionSource iActionSource, IStorageChannel<?> iStorageChannel) {
+        this.networkAmount = iaeStack.getStackSize();
+        this.update();
+    }
+
+    private interface IEmitterModeEvaluator {
+        boolean evaluate(long amount, long networkAmount);
+    }
+
     public enum LevelEmitterMode implements IStringSerializable {
-        MORE_THAN("cover.me_machine_controller.mode.more_than"),
-        LESS_THAN("cover.me_machine_controller.mode.less_than")
+        MORE_THAN("cover.me_machine_controller.mode.more_than", (amount, networkAmount) -> networkAmount > amount),
+        LESS_THAN("cover.me_machine_controller.mode.less_than", (amount, networkAmount) -> networkAmount < amount),
         ;
         public final String localeName;
+        private final IEmitterModeEvaluator evaluator;
 
-        LevelEmitterMode(String localeName) {
+        LevelEmitterMode(String localeName, IEmitterModeEvaluator evaluator) {
             this.localeName = localeName;
+            this.evaluator = evaluator;
         }
 
         @Override
         public @NotNull String getName() {
-            return localeName;
+            return this.localeName;
+        }
+
+        public boolean evaluate(long amount, long networkAmount) {
+            return this.evaluator.evaluate(amount, networkAmount);
         }
     }
 
