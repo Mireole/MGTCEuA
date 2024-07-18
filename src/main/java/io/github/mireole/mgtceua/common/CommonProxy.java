@@ -5,6 +5,8 @@ import gregtech.api.cover.CoverDefinition;
 import io.github.mireole.mgtceua.Tags;
 import io.github.mireole.mgtceua.common.covers.MGACovers;
 import io.github.mireole.mgtceua.common.items.MGAMetaItems;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -19,6 +21,11 @@ public class CommonProxy {
     @SubscribeEvent
     public static void registerCovers(GregTechAPI.RegisterEvent<CoverDefinition> event) {
         MGACovers.init();
+    }
+
+    @SubscribeEvent
+    public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
+        MGARecipes.init();
     }
 
 }
