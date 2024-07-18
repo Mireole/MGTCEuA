@@ -239,7 +239,7 @@ public class MEMachineController extends AbstractMeMachineController implements 
         IControllable controllable = this.getCoverableView().getCapability(GregtechTileCapabilities.CAPABILITY_CONTROLLABLE, this.getAttachedSide());
         if (controllable == null) return;
 
-        this.enabled = !this.mode.evaluate(this.amount, this.networkAmount);
+        this.enabled = this.mode.evaluate(this.amount, this.networkAmount);
         controllable.setWorkingEnabled(this.enabled);
         this.writeCustomData(GregtechDataCodes.UPDATE_COVER_MODE, buf -> buf.writeBoolean(this.enabled));
     }
