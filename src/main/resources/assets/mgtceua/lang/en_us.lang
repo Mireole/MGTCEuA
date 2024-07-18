@@ -1,4 +1,5 @@
 metaitem.cover.me_machine_controller.name=ME Machine Controller
+metaitem.cover.me_machine_controller.tooltip=Turns Machines §fON/OFF§7 as §fCover§7./nControls the machine via an item or fluid amount from your §fME network§7.
 cover.me_machine_controller.title=ME Machine Controller
 cover.me_machine_controller.mode.more_than=More than
 cover.me_machine_controller.mode.less_than=Less than
