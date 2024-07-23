@@ -24,6 +24,9 @@ jobs:
       - name: Setup Build
         uses: ./.github/actions/build_setup
 
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
+
       - name: Build with Gradle
         run: ./gradlew build --warning-mode all --build-cache
 
@@ -31,3 +34,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: artifacts
+          path: build/libs/*.jar
