@@ -1,11 +1,11 @@
 [{
     "modid": "${modid}",
     "name": "${modname}",
-    "description": "An example mod for Minecraft 1.12.2 with Forge",
+    "description": "Mireole's GTCEu Additions",
     "version": "${version}",
     "mcversion": "${mcversion}",
-    "logoFile": "",
-    "url": "",
+    "logoFile": "MGTCEuA_logo.png",
+    "url": "https://github.com/Mireole/MGTCEuA/",
     "authorList": ["Mireole"],
     "credits": "",
     "dependencies": []
