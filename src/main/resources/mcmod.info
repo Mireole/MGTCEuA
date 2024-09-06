@@ -8,5 +8,7 @@
     "url": "https://github.com/Mireole/MGTCEuA/",
     "authorList": ["Mireole"],
     "credits": "",
-    "dependencies": []
+    "dependencies": [],
+    "requiredMods": ["gregtech", "appliedenergistics2"],
+    "useDependencyInformation": true
 }]
