@@ -1,4 +1,4 @@
-//version: 1720840170
+//version: 1723428048
 /*
  * DO NOT CHANGE THIS FILE!
  * Also, you may replace this file at any time if there is an update available.
@@ -870,9 +870,9 @@ if (enableJava17RunTasks.toBoolean()) {
 
     dependencies {
         if (modId != 'lwjgl3ify') {
-            java17Dependencies("io.github.twilightflower:lwjgl3ify:1.0.1")
+            java17Dependencies("io.github.twilightflower:lwjgl3ify:1.0.0")
         }
-        java17PatchDependencies("io.github.twilightflower:lwjgl3ify:1.0.1:forgePatches") {
+        java17PatchDependencies("io.github.twilightflower:lwjgl3ify:1.0.0:forgePatches") {
             transitive = false
         }
     }
@@ -1009,8 +1009,11 @@ abstract class RunHotswappableMinecraftTask extends RunMinecraftTask {
 
         if (project.usesMixins.toBoolean()) {
             this.extraJvmArgs.addAll(project.provider(() -> {
-                // enableHotswap ? ["-javaagent:" + "\"/home/mireole/.gradle/caches/modules-2/files-2.1/zone.rong/mixinbooter/9.1/bbf73abfc0099e9e475f8f8303f3d5139a4a69af/mixinbooter-9.1.jar\""] : []
-                []
+                def mixinCfg = project.configurations.detachedConfiguration(project.dependencies.create(project.mixinProviderSpec))
+                mixinCfg.canBeConsumed = false
+                mixinCfg.canBeResolved = true
+                mixinCfg.transitive = false
+                enableHotswap ? ["-javaagent:" + mixinCfg.singleFile.absolutePath] : []
             }))
         }
     }
@@ -1388,7 +1391,7 @@ def getChangelog() {
 
 // Buildscript updating
 
-def buildscriptGradleVersion = '8.5'
+def buildscriptGradleVersion = '8.9'
 
 tasks.named('wrapper', Wrapper).configure {
     gradleVersion = buildscriptGradleVersion
